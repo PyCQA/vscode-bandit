@@ -46,9 +46,8 @@ GLOBAL_SETTINGS = {}
 RUNNER = pathlib.Path(__file__).parent / "lsp_runner.py"
 
 MAX_WORKERS = 5
-# TODO: Update the language server name and version.
 LSP_SERVER = server.LanguageServer(
-    name="<pytool-display-name>", version="<server version>", max_workers=MAX_WORKERS
+    name="bandit-server", version="v0.1.0", max_workers=MAX_WORKERS
 )
 
 
@@ -65,13 +64,8 @@ LSP_SERVER = server.LanguageServer(
 #  Black: https://github.com/microsoft/vscode-black-formatter/blob/main/bundled/tool
 #  isort: https://github.com/microsoft/vscode-isort/blob/main/bundled/tool
 
-# TODO: Update TOOL_MODULE with the module name for your tool.
-# e.g, TOOL_MODULE = "pylint"
-TOOL_MODULE = "<pytool-module>"
-
-# TODO: Update TOOL_DISPLAY with a display name for your tool.
-# e.g, TOOL_DISPLAY = "Pylint"
-TOOL_DISPLAY = "<pytool-display-name>"
+TOOL_MODULE = "bandit"
+TOOL_DISPLAY = "Bandit"
 
 # TODO: Update TOOL_ARGS with default argument you have to pass to your tool in
 # all scenarios.
