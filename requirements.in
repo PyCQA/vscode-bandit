@@ -12,4 +12,4 @@
 pygls
 packaging
 
-bandit
+bandit[sarif]
