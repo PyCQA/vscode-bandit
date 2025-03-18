@@ -1,6 +1,6 @@
-# Template for VS Code python tools extensions
+# Bandit extension for Visual Studio Code
 
-This is a template repository to get you started on building a VS Code extension for your favorite python tool. It could be a linter, formatter, or code analysis, or all of those together. This template will give you the basic building blocks you need to build a VS Code extension for it.
+A Visual Studio Code extension with support for the Bandit static analysis tool.
 
 ## Programming Languages and Frameworks
 
