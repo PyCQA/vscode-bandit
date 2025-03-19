@@ -1,7 +1,7 @@
 {
-    "name": "bandit",
-    "displayName": "Bandit",
-    "description": "Linting support for python files using `bandit`.",
+    "name": "bandit-pycqa",
+    "displayName": "Bandit by PyCQA",
+    "description": "The official VSCode Bandit extension developed by PyCQA",
     "version": "2025.3.0",
     "preview": true,
     "serverInfo": {
