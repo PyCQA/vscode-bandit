@@ -64,7 +64,7 @@ LSP_SERVER = server.LanguageServer(
 
 TOOL_MODULE = "bandit"
 TOOL_DISPLAY = "Bandit"
-TOOL_ARGS = ["-q -f sarif"]
+TOOL_ARGS = ["--quiet", "--format=sarif"]
 
 
 # **********************************************************
@@ -78,7 +78,7 @@ TOOL_ARGS = ["-q -f sarif"]
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_OPEN)
 def did_open(params: lsp.DidOpenTextDocumentParams) -> None:
     """LSP handler for textDocument/didOpen request."""
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
     LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
 
@@ -86,7 +86,7 @@ def did_open(params: lsp.DidOpenTextDocumentParams) -> None:
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_SAVE)
 def did_save(params: lsp.DidSaveTextDocumentParams) -> None:
     """LSP handler for textDocument/didSave request."""
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
     LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
 
@@ -94,19 +94,19 @@ def did_save(params: lsp.DidSaveTextDocumentParams) -> None:
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)
 def did_close(params: lsp.DidCloseTextDocumentParams) -> None:
     """LSP handler for textDocument/didClose request."""
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     # Publishing empty diagnostics to clear the entries for this file.
     LSP_SERVER.publish_diagnostics(document.uri, [])
 
 
 def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
     result = _run_tool_on_document(document)
-    return _parse_json_output(result.stdout) if result.stdout else []
+    return _parse_output(result.stdout) if result.stdout else []
 
 
-def _parse_json_output(content: str) -> list[lsp.Diagnostic]:
-    runs = json.loads(content).get("runs") or {}
-    results = runs.get("results") or []
+def _parse_output(content: str) -> list[lsp.Diagnostic]:
+    run = json.loads(content)["runs"][0] or {}
+    results = run.get("results") or []
     diagnostics: list[lsp.Diagnostic] = []
 
     line_offset = 1
@@ -133,7 +133,7 @@ def _parse_json_output(content: str) -> list[lsp.Diagnostic]:
                 result["properties"]["issue_severity"],
                 result["properties"]["issue_confidence"],
             ),
-            code=location["contextRegion"]["snippet"]["text"],
+            code=location["region"]["snippet"]["text"],
             source=TOOL_MODULE,
         )
         diagnostics.append(diagnostic)
