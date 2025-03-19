@@ -1,7 +1,7 @@
 {
     "name": "bandit-pycqa",
     "displayName": "Bandit by PyCQA",
-    "description": "The official VSCode Bandit extension developed by PyCQA",
+    "description": "The official Bandit extension developed by PyCQA",
     "version": "2025.3.0",
     "preview": true,
     "serverInfo": {
@@ -18,12 +18,14 @@
     "bugs": {
         "url": "https://github.com/PyCQA/vscode-bandit/issues"
     },
+    "icon": "icon.png",
     "galleryBanner": {
         "color": "#1e415e",
         "theme": "dark"
     },
     "keywords": [
         "python",
+        "linting",
         "bandit"
     ],
     "engines": {
@@ -31,8 +33,7 @@
     },
     "categories": [
         "Programming Languages",
-        "Linters",
-        "Formatters"
+        "Linters"
     ],
     "extensionDependencies": [
         "ms-python.python"
