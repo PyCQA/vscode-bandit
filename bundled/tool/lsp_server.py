@@ -114,6 +114,7 @@ def _parse_output(content: str) -> list[lsp.Diagnostic]:
 
     for result in results:
         location = result["locations"][0]["physicalLocation"]
+        rule = run["tool"]["driver"]["rules"][result["ruleIndex"]]
 
         start = lsp.Position(
             line=location["region"]["startLine"] - line_offset,
@@ -133,8 +134,11 @@ def _parse_output(content: str) -> list[lsp.Diagnostic]:
                 result["properties"]["issue_severity"],
                 result["properties"]["issue_confidence"],
             ),
-            code=location["region"]["snippet"]["text"],
-            source=TOOL_MODULE,
+            code=f"{result["ruleId"]}:{rule["name"]}",
+            code_description=lsp.CodeDescription(
+                href=rule["helpUri"],
+            ),
+            source=TOOL_DISPLAY,
         )
         diagnostics.append(diagnostic)
 

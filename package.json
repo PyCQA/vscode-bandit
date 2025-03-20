@@ -2,7 +2,7 @@
     "name": "bandit-pycqa",
     "displayName": "Bandit by PyCQA",
     "description": "The official Bandit extension developed by PyCQA",
-    "version": "2025.3.1",
+    "version": "2025.3.2",
     "preview": true,
     "serverInfo": {
         "name": "Bandit",
