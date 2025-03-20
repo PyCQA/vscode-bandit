@@ -45,7 +45,7 @@ while not EXIT_NOW:
         continue
 
     if method == "run":
-        is_exception = False
+        IS_EXCEPTION = False
         # This is needed to preserve sys.path, pylint modifies
         # sys.path and that might not work for this scenario
         # next time around.
@@ -65,12 +65,12 @@ while not EXIT_NOW:
                 )
             except Exception:  # pylint: disable=broad-except
                 result = utils.RunResult("", traceback.format_exc(chain=True))
-                is_exception = True
+                IS_EXCEPTION = True
 
         response = {"id": msg["id"]}
         if result.stderr:
             response["error"] = result.stderr
-            response["exception"] = is_exception
+            response["exception"] = IS_EXCEPTION
         elif result.stdout:
             response["result"] = result.stdout
 

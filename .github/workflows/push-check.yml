@@ -86,11 +86,7 @@ jobs:
         shell: bash
 
       - name: Run tests
-        run: python -m nox --session test
-        shell: bash
-
-      - name: Validate README.md
-        run: python -m nox --session validate_readme
+        run: python -m nox --session tests
         shell: bash
 
   ts-tests:

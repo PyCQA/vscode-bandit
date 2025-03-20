@@ -1,3 +1,3 @@
-import sys
+import hashlib
 
-print(x)
+hashlib.new("md5")
