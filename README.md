@@ -34,3 +34,13 @@ The `bandit.path` setting also supports the `${interpreter}` variable as one of 
 | Command                | Description                       |
 | ---------------------- | --------------------------------- |
 | Bandit: Restart Server | Force re-start the linter server. |
+
+## Logging
+
+From the Command Palette (**View** > **Command Palette ...**), run the **Developer: Set Log Level...** command. Select **Bandit** from the **Extension logs** group. Then select the log level you want to set.
+
+To open the logs, click on the language status icon (`{}`) on the bottom right of the Status bar, next to the Python language mode. Locate the **Bandit** entry and select **Open logs**.
+
+## Troubleshooting
+
+In this section, you will find some common issues you might encounter and how to resolve them. If you are experiencing any issues that are not covered here, please [file an issue](https://github.com/PyCQA/vscode-bandit/issues).
