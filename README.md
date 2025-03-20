@@ -2,81 +2,35 @@
 
 A Visual Studio Code extension with support for the Bandit static analysis tool.
 
-## Programming Languages and Frameworks
+This extension supports all [actively supported versions](https://devguide.python.org/#status-of-python-branches) of the Python language.
 
-This extension has two parts, the extension part and language server part. The extension part is written in TypeScript, and language server part is written in Python over the [_pygls_][pygls] (Python language server) library.
+For more information on Bandit, see https://bandit.readthedocs.io/
 
-See [Language Server Protocol](https://microsoft.github.io/language-server-protocol). [_pygls_][pygls] currently works on the [version 3.16 of LSP](https://microsoft.github.io/language-server-protocol/specifications/specification-3-16/).
+## Settings
 
-The TypeScript part handles working with VS Code and its UI.
+There are several settings you can configure to customize the behavior of this extension.
 
-## Requirements
+| Settings | Default | Description |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| bandit.args | `[]` | Arguments passed to Bandit for linting Python files. Each argument should be provided as a separate string in the array. <br> Examples: <br>- `"bandit.args": ["--severity-level=high"]` <br> - `"bandit.args": ["--skip=B603", "--confidence-level=high"]` |
+| bandit.cwd | `${workspaceFolder}` | Sets the current working directory used to lint Python files with Bandit. By default, it uses the root directory of the workspace `${workspaceFolder}`. You can set it to `${fileDirname}` to use the parent folder of the file being linted as the working directory for Bandit. |
+| bandit.enabled | `true` | Enable/disable linting Python files with Bandit. This setting can be applied globally or at the workspace level. If disabled, the linting server itself will continue to be active and monitor read and write events, but it won't perform linting or expose code actions. |
+| bandit.path | `[]` | "Path or command to be used by the extension to lint Python files with Bandit. Accepts an array of a single or multiple strings. If passing a command, each argument should be provided as a separate string in the array. If set to `["Bandit"]`, it will use the version of Bandit available in the `PATH` environment variable. Note: Using this option may slowdown linting. <br>Examples: <br>- `"bandit.path" : ["~/global_env/bandit"]` <br>- `"bandit.path" : ["bandit"]` <br>- `"bandit.path" : ["${interpreter}", "-m", "bandit"]` |
+| bandit.interpreter | `[]` | Path to a Python executable or a command that will be used to launch the Bandit server and any subprocess. Accepts an array of a single or multiple strings. When set to `[]`, the extension will use the path to the selected Python interpreter. If passing a command, each argument should be provided as a separate string in the array. |
+| bandit.importStrategy   | `useBundled` | Defines which Bandit binary to be used to lint Python files. When set to `useBundled`, the extension will use the Bandit binary that is shipped with the extension. When set to `fromEnvironment`, the extension will attempt to use the Bandit binary and all dependencies that are available in the currently selected environment. Note: If the extension can't find a valid Bandit binary in the selected environment, it will fallback to using the Bandit binary that is shipped with the extension. This setting will be overriden if `bandit.path` is set. |
+| bandit.showNotification | `off` | Controls when notifications are shown by this extension. Accepted values are `onError`, `onWarning`, `always` and `off`. |
 
-1. VS Code 1.64.0 or greater
-1. Python 3.9 or greater
-1. node >= 18.17.0
-1. npm >= 8.19.0 (`npm` is installed with node, check npm version, use `npm install -g npm@8.3.0` to update)
-1. Python extension for VS Code
+The following variables are supported for substitution in the `bandit.args`, `bandit.cwd`, `bandit.path`, and `bandit.interpreter` settings:
 
-You should know to create and work with python virtual environments.
+-   `${workspaceFolder}`
+-   `${workspaceFolder:FolderName}`
+-   `${userHome}`
+-   `${env:EnvVarName}`
 
-## Features of this Template
+The `bandit.path` setting also supports the `${interpreter}` variable as one of the entries of the array. This variable is subtituted based on the value of the `bandit.interpreter` setting.
 
-After finishing the getting started part, this template would have added the following. Assume `<pytool-module>` was replaced with `mytool`, and `<pytool-display-name>` with`My Tool`:
+## Commands
 
-## Building and Running the extension
-
-Run the `Debug Extension and Python` configuration form VS Code. That should build and debug the extension in host window.
-
-Note: if you just want to build you can run the build task in VS Code (`ctrl`+`shift`+`B`)
-
-## Debugging
-
-To debug both TypeScript and Python code use `Debug Extension and Python` debug config. This is the recommended way. Also, when stopping, be sure to stop both the Typescript, and Python debug sessions. Otherwise, it may not reconnect to the python session.
-
-To debug only TypeScript code, use `Debug Extension` debug config.
-
-To debug a already running server or in production server, use `Python Attach`, and select the process that is running `lsp_server.py`.
-
-## Logging and Logs
-
-The template creates a logging Output channel that can be found under `Output` > `Bandit` panel. You can control the log level running the `Developer: Set Log Level...` command from the Command Palette, and selecting your extension from the list. It should be listed using the display name for your tool. You can also set the global log level, and that will apply to all extensions and the editor.
-
-If you need logs that involve messages between the Language Client and Language Server, you can set `"bandit.server.trace": "verbose"`, to get the messaging logs. These logs are also available `Output` > `Bandit` panel.
-
-## Linting
-
-Run `nox --session lint` to run linting on both Python and TypeScript code. Please update the nox file if you want to use a different linter and formatter.
-
-## Packaging and Publishing
-
-1. Build package using `nox --session build_package`.
-1. Take the generated `.vsix` file and upload it to your extension management page <https://marketplace.visualstudio.com/manage>.
-
-To do this from the command line see here <https://code.visualstudio.com/api/working-with-extensions/publishing-extension>
-
-## Upgrading Dependencies
-
-Dependabot yml is provided to make it easy to setup upgrading dependencies in this extension. Be sure to add the labels used in the dependabot to your repo.
-
-To manually upgrade your local project:
-
-1. Create a new branch
-1. Run `npm update` to update node modules.
-1. Run `nox --session setup` to upgrade python packages.
-
-## Troubleshooting
-
-### Changing path or name of `lsp_server.py` something else
-
-If you want to change the name of `lsp_server.py` to something else, you can. Be sure to update `constants.ts` and `src/test/python_tests/lsp_test_client/session.py`.
-
-Also make sure that the inserted paths in `lsp_server.py` are pointing to the right folders to pick up the dependent packages.
-
-### Module not found errors
-
-This can occurs if `bundled/libs` is empty. That is the folder where we put your tool and other dependencies. Be sure to follow the build steps need for creating and bundling the required libs.
-
-Common one is [_pygls_][pygls] module not found.
-
-[pygls]: https://github.com/openlawlibrary/pygls
+| Command                | Description                       |
+| ---------------------- | --------------------------------- |
+| Bandit: Restart Server | Force re-start the linter server. |
