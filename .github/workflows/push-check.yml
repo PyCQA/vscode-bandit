@@ -70,7 +70,10 @@ jobs:
 
       # This will install libraries to a target directory.
       - name: Install bundled python libraries
-        run: python -m nox --session install_bundled_libs
+        run: |
+          export PYTHONUTF8=1
+          export PYTHONIOENCODING=utf-8
+          python -m nox --session install_bundled_libs
         shell: bash
 
       # Now that the bundle is installed to target using python 3.9
