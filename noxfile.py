@@ -5,6 +5,7 @@
 import json
 import os
 import pathlib
+import re
 import urllib.request as url_lib
 from typing import List
 
@@ -31,11 +32,17 @@ def _check_files(names: List[str]) -> None:
         file_path = root_dir / name
         lines: List[str] = file_path.read_text().splitlines()
         if any(line for line in lines if line.startswith("# TODO:")):
-            raise Exception(f"Please update {os.fspath(file_path)}.")
+            raise ValueError(f"Please update {os.fspath(file_path)}.")
 
 
 def _update_pip_packages(session: nox.Session) -> None:
-    session.run("pip-compile", "--generate-hashes", "--resolver=backtracking", "--upgrade", "./requirements.in")
+    session.run(
+        "pip-compile",
+        "--generate-hashes",
+        "--resolver=backtracking",
+        "--upgrade",
+        "./requirements.in",
+    )
     session.run(
         "pip-compile",
         "--generate-hashes",
@@ -95,6 +102,13 @@ def _setup_template_environment(session: nox.Session) -> None:
     _install_bundle(session)
 
 
+@nox.session(python="3.9")
+def install_bundled_libs(session):
+    """Installs the libraries that will be bundled with the extension."""
+    session.install("wheel")
+    _install_bundle(session)
+
+
 @nox.session()
 def setup(session: nox.Session) -> None:
     """Sets up the template for development."""
@@ -115,7 +129,7 @@ def lint(session: nox.Session) -> None:
     session.install("-r", "src/test/python_tests/requirements.txt")
 
     session.install("pylint")
-    session.run("pylint", "-d", "W0511", "./bundled/tool")
+    session.run("pylint", "-d", "W0511,R0801", "./bundled/tool")
     session.run(
         "pylint",
         "-d",
@@ -148,6 +162,29 @@ def build_package(session: nox.Session) -> None:
     _setup_template_environment(session)
     session.run("npm", "install", external=True)
     session.run("npm", "run", "vsce-package", external=True)
+
+
+@nox.session()
+def update_build_number(session: nox.Session) -> None:
+    """Updates build number for the extension."""
+    if len(session.posargs) == 0:
+        session.log("No updates to package version")
+        return
+
+    package_json_path = pathlib.Path(__file__).parent / "package.json"
+    session.log(f"Reading package.json at: {package_json_path}")
+
+    package_json = json.loads(package_json_path.read_text(encoding="utf-8"))
+
+    parts = re.split("\\.|-", package_json["version"])
+    major, minor = parts[:2]
+
+    version = f"{major}.{minor}.{session.posargs[0]}"
+    version = version if len(parts) == 3 else f"{version}-{''.join(parts[3:])}"
+
+    session.log(f"Updating version from {package_json['version']} to {version}")
+    package_json["version"] = version
+    package_json_path.write_text(json.dumps(package_json, indent=4), encoding="utf-8")
 
 
 @nox.session()

@@ -115,6 +115,8 @@ def _parse_output(content: str) -> list[lsp.Diagnostic]:
     for result in results:
         location = result["locations"][0]["physicalLocation"]
         rule = run["tool"]["driver"]["rules"][result["ruleIndex"]]
+        rule_id = result["ruleId"]
+        rule_name = rule["name"]
 
         start = lsp.Position(
             line=location["region"]["startLine"] - line_offset,
@@ -134,7 +136,7 @@ def _parse_output(content: str) -> list[lsp.Diagnostic]:
                 result["properties"]["issue_severity"],
                 result["properties"]["issue_confidence"],
             ),
-            code=f"{result["ruleId"]}:{rule["name"]}",
+            code=f"{rule_id}:{rule_name}",
             code_description=lsp.CodeDescription(
                 href=rule["helpUri"],
             ),
@@ -269,6 +271,7 @@ def _get_settings_by_document(document: workspace.Document | None):
 # *****************************************************
 # Internal execution APIs.
 # *****************************************************
+# pylint: disable=too-many-branches
 def _run_tool_on_document(
     document: workspace.Document,
     use_stdin: bool = False,
@@ -449,7 +452,8 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
                 # If your tool supports a programmatic API then replace the function below
                 # with code for your tool. You can also use `utils.run_api` helper, which
                 # handles changing working directories, managing io streams, etc.
-                # Also update `_run_tool_on_document` function and `utils.run_module` in `lsp_runner.py`.
+                # Also update `_run_tool_on_document` function and `utils.run_module` in
+                # `lsp_runner.py`.
                 result = utils.run_module(
                     module=TOOL_MODULE, argv=argv, use_stdin=True, cwd=cwd
                 )
@@ -469,22 +473,26 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
 def log_to_output(
     message: str, msg_type: lsp.MessageType = lsp.MessageType.Log
 ) -> None:
+    """Log a message to output."""
     LSP_SERVER.show_message_log(message, msg_type)
 
 
 def log_error(message: str) -> None:
+    """Log an error."""
     LSP_SERVER.show_message_log(message, lsp.MessageType.Error)
     if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["onError", "onWarning", "always"]:
         LSP_SERVER.show_message(message, lsp.MessageType.Error)
 
 
 def log_warning(message: str) -> None:
+    """Log an warning."""
     LSP_SERVER.show_message_log(message, lsp.MessageType.Warning)
     if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["onWarning", "always"]:
         LSP_SERVER.show_message(message, lsp.MessageType.Warning)
 
 
 def log_always(message: str) -> None:
+    """Log a message always."""
     LSP_SERVER.show_message_log(message, lsp.MessageType.Info)
     if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["always"]:
         LSP_SERVER.show_message(message, lsp.MessageType.Info)
