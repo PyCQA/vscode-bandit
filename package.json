@@ -8,6 +8,9 @@
         "name": "Bandit",
         "module": "bandit"
     },
+    "sponsor": {
+      "url": "https://github.com/sponsors/ericwb"
+    },
     "publisher": "PyCQA",
     "license": "MIT",
     "homepage": "https://github.com/PyCQA/vscode-bandit",
