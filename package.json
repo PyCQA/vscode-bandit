@@ -9,7 +9,7 @@
         "module": "bandit"
     },
     "sponsor": {
-      "url": "https://github.com/sponsors/ericwb"
+        "url": "https://github.com/sponsors/ericwb"
     },
     "publisher": "PyCQA",
     "license": "MIT",
