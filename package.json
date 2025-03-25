@@ -49,6 +49,7 @@
     },
     "activationEvents": [
         "onLanguage:python",
+        "workspaceContains:.bandit",
         "workspaceContains:*.py"
     ],
     "main": "./dist/extension.js",
