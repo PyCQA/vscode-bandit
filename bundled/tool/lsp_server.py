@@ -195,6 +195,7 @@ def on_shutdown(_params: Optional[Any] = None) -> None:
 
 def _get_global_defaults():
     return {
+        "enabled": GLOBAL_SETTINGS.get("enabled", True),
         "path": GLOBAL_SETTINGS.get("path", []),
         "interpreter": GLOBAL_SETTINGS.get("interpreter", [sys.executable]),
         "args": GLOBAL_SETTINGS.get("args", []),
@@ -271,7 +272,7 @@ def _get_settings_by_document(document: workspace.Document | None):
 # *****************************************************
 # Internal execution APIs.
 # *****************************************************
-# pylint: disable=too-many-branches
+# pylint: disable=too-many-branches,too-many-statements
 def _run_tool_on_document(
     document: workspace.Document,
     use_stdin: bool = False,
@@ -284,18 +285,24 @@ def _run_tool_on_document(
     """
     if extra_args is None:
         extra_args = []
-    if str(document.uri).startswith("vscode-notebook-cell"):
-        # TODO: Decide on if you want to skip notebook cells.
-        # Skip notebook cells
-        return None
-
-    if utils.is_stdlib_file(document.path):
-        # TODO: Decide on if you want to skip standard library files.
-        # Skip standard library python files.
-        return None
 
     # deep copy here to prevent accidentally updating global settings.
     settings = copy.deepcopy(_get_settings_by_document(document))
+
+    if not settings["enabled"]:
+        log_warning(f"Skipping file [Linting Disabled]: {document.path}")
+        log_warning("See `bandit.enabled` in settings.json to enabling linting.")
+        return None
+
+    if str(document.uri).startswith("vscode-notebook-cell"):
+        log_warning(f"Skipping notebook cells [Not Supported]: {str(document.uri)}")
+        return None
+
+    if utils.is_stdlib_file(document.path):
+        log_warning(
+            f"Skipping standard library file (stdlib excluded): {document.path}"
+        )
+        return None
 
     code_workspace = settings["workspaceFS"]
     cwd = settings["cwd"]

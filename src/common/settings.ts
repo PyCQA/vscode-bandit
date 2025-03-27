@@ -62,6 +62,7 @@ export async function getWorkspaceSettings(
     }
 
     const workspaceSetting = {
+        enabled: config.get<boolean>('enabled', true),
         cwd: workspace.uri.fsPath,
         workspace: workspace.uri.toString(),
         args: resolveVariables(config.get<string[]>(`args`) ?? [], workspace),
@@ -91,6 +92,7 @@ export async function getGlobalSettings(namespace: string, includeInterpreter?: 
 
     const setting = {
         cwd: process.cwd(),
+        enabled: getGlobalValue<boolean>(config, 'enabled', true),
         workspace: process.cwd(),
         args: getGlobalValue<string[]>(config, 'args', []),
         path: getGlobalValue<string[]>(config, 'path', []),
@@ -104,6 +106,7 @@ export async function getGlobalSettings(namespace: string, includeInterpreter?: 
 export function checkIfConfigurationChanged(e: ConfigurationChangeEvent, namespace: string): boolean {
     const settings = [
         `${namespace}.args`,
+        `${namespace}.enabled`,
         `${namespace}.path`,
         `${namespace}.interpreter`,
         `${namespace}.importStrategy`,
