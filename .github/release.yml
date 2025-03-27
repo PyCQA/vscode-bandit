@@ -6,7 +6,7 @@ changelog:
   categories:
     - title: Enhancements
       labels:
-        - 'feature-request'
+        - 'enhancement'
 
     - title: Bug Fixes
       labels:
