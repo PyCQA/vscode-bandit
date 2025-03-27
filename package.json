@@ -78,6 +78,22 @@
                     "scope": "resource",
                     "type": "array"
                 },
+                "bandit.cwd": {
+                    "default": "${workspaceFolder}",
+                    "markdownDescription": "%settings.cwd.description%",
+                    "scope": "resource",
+                    "type": "string",
+                    "examples": [
+                        "${workspaceFolder}/src",
+                        "${fileDirname}"
+                    ]
+                },
+                "bandit.enabled": {
+                    "default": true,
+                    "markdownDescription": "%settings.enabled.description%",
+                    "scope": "resource",
+                    "type": "boolean"
+                },
                 "bandit.path": {
                     "default": [],
                     "description": "When set to a path to bandit binary, extension will use that. NOTE: Using this option may slowdown server response time.",
