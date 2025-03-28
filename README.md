@@ -1,10 +1,12 @@
+![logotype-sm](https://github.com/user-attachments/assets/3e8c0b13-38cd-4f2a-a001-9fa20aaea533)
+
 # Bandit extension for Visual Studio Code
 
-A Visual Studio Code extension with support for the Bandit static analysis tool. This extension ships with `bandit=1.8.3`.
+A Visual Studio Code extension for the [Bandit](https://github.com/PyCQA/bandit) static analysis security tool, developed and maintained by the original authors of Bandit. This extension comes bundled with Bandit version 1.8.3.
 
-This extension supports all [actively supported versions](https://devguide.python.org/#status-of-python-branches) of the Python language.
+It is compatible with all actively supported versions of the Python programming language.
 
-For more information on Bandit, see https://bandit.readthedocs.io/
+For more information about Bandit, visit https://bandit.readthedocs.io/.
 
 ## Settings
 
