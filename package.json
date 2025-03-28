@@ -67,6 +67,14 @@
         "vsce-package": "vsce package -o bandit.vsix"
     },
     "contributes": {
+        "languages": [
+            {
+                "filenames": [
+                    ".bandit"
+                ],
+                "id": "ini"
+            }
+        ],
         "configuration": {
             "properties": {
                 "bandit.args": {
