@@ -4,7 +4,7 @@
 
 A Visual Studio Code extension for the [Bandit](https://github.com/PyCQA/bandit) static analysis security tool, developed and maintained by the original authors of Bandit. This extension comes bundled with Bandit version 1.8.3.
 
-It is compatible with all actively supported versions of the Python programming language.
+It is compatible with all [actively supported versions](https://devguide.python.org/#status-of-python-branches) of the Python programming language.
 
 For more information about Bandit, visit https://bandit.readthedocs.io/.
 
