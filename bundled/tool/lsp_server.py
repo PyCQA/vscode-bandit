@@ -159,6 +159,75 @@ def _get_severity(*_codes: list[str]) -> lsp.DiagnosticSeverity:
 
 
 # **********************************************************
+# Linting features end here
+# **********************************************************
+
+
+# **********************************************************
+# Code Action features start here
+# **********************************************************
+
+
+def severity_to_str(severity: int) -> str:
+    """Convert DiagnosticSeverity to a string."""
+    return {
+        lsp.DiagnosticSeverity.Error: "error",
+        lsp.DiagnosticSeverity.Warning: "warning",
+        lsp.DiagnosticSeverity.Information: "info",
+        lsp.DiagnosticSeverity.Hint: "hint",
+    }.get(severity, "unknown")
+
+
+@LSP_SERVER.feature(
+    lsp.TEXT_DOCUMENT_CODE_ACTION,
+    lsp.CodeActionOptions(
+        code_action_kinds=[lsp.CodeActionKind.QuickFix], resolve_provider=True
+    ),
+)
+def code_action(params: lsp.CodeActionParams) -> list[lsp.CodeAction]:
+    """LSP handler for textDocument/codeAction request."""
+    uri = params.text_document.uri
+    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    settings = copy.deepcopy(_get_settings_by_document(document))
+    code_actions = []
+    if not settings["enabled"]:
+        return code_actions
+
+    diagnostics = (d for d in params.context.diagnostics if d.source == TOOL_DISPLAY)
+
+    for diagnostic in diagnostics:
+        # Create action to suppress the issue
+        rule_id = diagnostic.code.split(":")[0]
+        severity = severity_to_str(diagnostic.severity)
+        line_number = diagnostic.range.start.line
+
+        line_text = document.lines[line_number]
+        suppress_comment = f"{line_text.rstrip()}  # nosec: {rule_id}"
+
+        replace_range = lsp.Range(
+            start=lsp.Position(line=line_number, character=0),
+            end=lsp.Position(line=line_number, character=len(line_text)),
+        )
+        edit = lsp.TextEdit(range=replace_range, new_text=suppress_comment)
+
+        code_actions.append(
+            lsp.CodeAction(
+                title=f"Add '# nosec: {rule_id}' to suppress {severity}",
+                kind=lsp.CodeActionKind.QuickFix,
+                diagnostics=[diagnostic],
+                edit=lsp.WorkspaceEdit(changes={uri: [edit]}),
+            )
+        )
+
+    return code_actions
+
+
+# **********************************************************
+# Code Action features end here
+# **********************************************************
+
+
+# **********************************************************
 # Required Language Server Initialization and Exit handlers.
 # **********************************************************
 @LSP_SERVER.feature(lsp.INITIALIZE)
