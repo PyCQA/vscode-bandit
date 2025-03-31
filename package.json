@@ -79,7 +79,7 @@
             "properties": {
                 "bandit.args": {
                     "default": [],
-                    "description": "Arguments passed in. Each argument is a separate item in the array.",
+                    "markdownDescription": "%settings.args.description%",
                     "items": {
                         "type": "string"
                     },
@@ -88,13 +88,13 @@
                 },
                 "bandit.enabled": {
                     "default": true,
-                    "markdownDescription": "Enable/disable linting Python files with Bandit.",
+                    "markdownDescription": "%settings.enabled.description%",
                     "scope": "resource",
                     "type": "boolean"
                 },
                 "bandit.path": {
                     "default": [],
-                    "description": "When set to a path to bandit binary, extension will use that. NOTE: Using this option may slowdown server response time.",
+                    "markdownDescription": "%settings.path.description%",
                     "scope": "resource",
                     "items": {
                         "type": "string"
@@ -103,21 +103,21 @@
                 },
                 "bandit.importStrategy": {
                     "default": "useBundled",
-                    "description": "Defines where `bandit` is imported from. This setting may be ignored if `bandit.path` is set.",
+                    "markdownDescription": "%settings.importStrategy.description%",
                     "enum": [
                         "useBundled",
                         "fromEnvironment"
                     ],
                     "enumDescriptions": [
-                        "Always use the bundled version of `bandit`.",
-                        "Use `bandit` from environment, fallback to bundled version only if `bandit` not available in the environment."
+                        "%settings.importStrategy.useBundled.description%",
+                        "%settings.importStrategy.fromEnvironment.description%"
                     ],
                     "scope": "window",
                     "type": "string"
                 },
                 "bandit.interpreter": {
                     "default": [],
-                    "description": "When set to a path to python executable, extension will use that to launch the server and any subprocess.",
+                    "markdownDescription": "%settings.interpreter.description%",
                     "scope": "resource",
                     "items": {
                         "type": "string"
@@ -126,7 +126,7 @@
                 },
                 "bandit.showNotifications": {
                     "default": "off",
-                    "description": "Controls when notifications are shown by this extension.",
+                    "markdownDescription": "%settings.showNotifications.description%",
                     "enum": [
                         "off",
                         "onError",
@@ -134,10 +134,10 @@
                         "always"
                     ],
                     "enumDescriptions": [
-                        "All notifications are turned off, any errors or warning are still available in the logs.",
-                        "Notifications are shown only in the case of an error.",
-                        "Notifications are shown for errors and warnings.",
-                        "Notifications are show for anything that the server chooses to show."
+                        "%settings.showNotifications.off.description%",
+                        "%settings.showNotifications.onError.description%",
+                        "%settings.showNotifications.onWarning.description%",
+                        "%settings.showNotifications.always.description%"
                     ],
                     "scope": "machine",
                     "type": "string"
@@ -146,7 +146,7 @@
         },
         "commands": [
             {
-                "title": "Restart Server",
+                "title": "%command.restartServer%",
                 "category": "Bandit",
                 "command": "bandit.restart"
             }
