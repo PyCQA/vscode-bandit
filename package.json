@@ -1,7 +1,7 @@
 {
     "name": "bandit-pycqa",
     "displayName": "Bandit by PyCQA",
-    "description": "The official Bandit extension developed by PyCQA",
+    "description": "%extension.description%",
     "version": "2025.14.0",
     "preview": true,
     "serverInfo": {
