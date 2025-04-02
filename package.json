@@ -3,7 +3,7 @@
     "displayName": "Bandit by PyCQA",
     "description": "%extension.description%",
     "version": "2025.14.0",
-    "preview": true,
+    "preview": false,
     "serverInfo": {
         "name": "Bandit",
         "module": "bandit"
