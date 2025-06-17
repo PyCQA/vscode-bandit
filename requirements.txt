@@ -12,9 +12,9 @@ attrs==25.3.0 \
     #   jschema-to-python
     #   lsprotocol
     #   sarif-om
-bandit[sarif]==1.8.3 \
-    --hash=sha256:28f04dc0d258e1dd0f99dee8eefa13d1cb5e3fde1a5ab0c523971f97b289bcd8 \
-    --hash=sha256:f5847beb654d309422985c36644649924e0ea4425c76dec2e89110b87506193a
+bandit[sarif]==1.8.5 \
+    --hash=sha256:cb2e57524e99e33ced48833c6cc9c12ac78ae970bb6a450a83c4b506ecc1e2f9 \
+    --hash=sha256:db812e9c39b8868c0fed5278b77fffbbaba828b4891bc80e34b9c50373201cfd
     # via -r requirements.in
 cattrs==24.1.3 \
     --hash=sha256:981a6ef05875b5bb0c7fb68885546186d306f10f0f6718fe9b96c226e68821ff \
