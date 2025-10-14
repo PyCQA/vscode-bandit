@@ -16,7 +16,8 @@ vsc-extension-quickstart.md
 **/__pycache__/**
 **/*.pyc
 bundled/libs/bin/**
-bundled/libs/*.dist-info/**
+# include .dist-info for runtime metadata, see Issue #104
+# bundled/libs/*.dist-info/**
 noxfile.py
 .pytest_cache/**
 .pylintrc
