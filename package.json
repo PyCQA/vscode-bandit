@@ -85,6 +85,15 @@
                     },
                     "scope": "resource",
                     "type": "array"
+                "bandit.cwd": {
+                    "default": "${workspaceFolder}",
+                    "markdownDescription": "%settings.cwd.description%",
+                    "scope": "resource",
+                    "type": "string",
+                    "examples": [
+                        "${workspaceFolder}/src",
+                        "${fileDirname}"
+                    ]
                 },
                 "bandit.enabled": {
                     "default": true,
