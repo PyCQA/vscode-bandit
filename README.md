@@ -23,16 +23,16 @@ There are several settings you can configure to customize the behavior of this e
 
 ### Variable Substitution
 
-The following variables are supported for substitution in the `bandit.args`, `bandit.cwd`, `bandit.path`, and `bandit.interpreter` settings:
+The following variables are supported for substitution in the `bandit.args`, `bandit.cwd`, and `bandit.path` settings:
 
-| Variable                        | Description                                                                       | Supported In                         |
-|---------------------------------|-----------------------------------------------------------------------------------|--------------------------------------|
-| `${workspaceFolder}`            | Root directory of the currently active workspace folder                           | `args`, `cwd`, `path`, `interpreter` |
-| `${workspaceFolder:FolderName}` | Root directory of a specific workspace folder in a multi-root workspace           | `args`, `path`, `interpreter`        |
-| `${userHome}`                   | Path to the current user's home directory                                         | `args`, `path`, `interpreter`        |
-| `${env:EnVarName}`              | Value of the environment variable `EnVarName`                                     | `args`, `path`, `interpreter`        |
-| `${interpreter}`                | Python executable used by Bandit (workspace interpreter or bandit.interpreter)    | `path` only                          |
-| `${fileDirname}`                | Directory of the file being linted.                                               | `cwd` only                           |
+| Variable                        | Description                                                                    | Supported In          |
+|---------------------------------|--------------------------------------------------------------------------------|-----------------------|
+| `${workspaceFolder}`            | Root directory of the currently active workspace folder                        | `args`, `cwd`, `path` |
+| `${workspaceFolder:FolderName}` | Root directory of a specific workspace folder in a multi-root workspace        | `args`, `path`        |
+| `${userHome}`                   | Path to the current user's home directory                                      | `args`, `path`        |
+| `${env:EnvVarName}`             | Value of the environment variable `EnvVarName`                                 | `args`, `path`        |
+| `${interpreter}`                | Python executable used by Bandit (workspace interpreter or bandit.interpreter) | `path`                |
+| `${fileDirname}`                | Directory of the file being linted                                             | `cwd`                 |
 
 ## Commands
 
