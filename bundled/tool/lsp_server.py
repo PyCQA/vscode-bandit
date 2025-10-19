@@ -353,6 +353,7 @@ def get_cwd(settings: Dict[str, Any], document: Optional[workspace.Document]) ->
 
     return settings["cwd"]
 
+
 # pylint: disable=too-many-branches,too-many-statements
 def _run_tool_on_document(
     document: workspace.Document,
