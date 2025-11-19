@@ -35,17 +35,17 @@ import lsp_utils as utils
 
 RPC = jsonrpc.create_json_rpc(sys.stdin.buffer, sys.stdout.buffer)
 
-EXIT_NOW = False
-while not EXIT_NOW:
+exit_now = False
+while not exit_now:
     msg = RPC.receive_data()
 
     method = msg["method"]
     if method == "exit":
-        EXIT_NOW = True
+        exit_now = True
         continue
 
     if method == "run":
-        IS_EXCEPTION = False
+        is_exception = False
         # This is needed to preserve sys.path, pylint modifies
         # sys.path and that might not work for this scenario
         # next time around.
@@ -65,12 +65,12 @@ while not EXIT_NOW:
                 )
             except Exception:  # pylint: disable=broad-except
                 result = utils.RunResult("", traceback.format_exc(chain=True))
-                IS_EXCEPTION = True
+                is_exception = True
 
         response = {"id": msg["id"]}
         if result.stderr:
             response["error"] = result.stderr
-            response["exception"] = IS_EXCEPTION
+            response["exception"] = is_exception
         elif result.stdout:
             response["result"] = result.stdout
 

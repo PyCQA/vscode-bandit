@@ -59,7 +59,7 @@ def test_linting_example():
                     "severity": 1,
                     "code": "B324:hashlib",
                     "codeDescription": {
-                        "href": "https://bandit.readthedocs.io/en/1.8.6/plugins/b324_hashlib.html"
+                        "href": "https://bandit.readthedocs.io/en/1.9.1/plugins/b324_hashlib.html"
                     },
                     "source": SERVER_INFO["name"],
                 },
