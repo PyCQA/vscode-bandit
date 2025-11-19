@@ -9,7 +9,7 @@ import os
 import pathlib
 import sys
 import traceback
-from typing import Any, Optional, Sequence
+from typing import Any, Dict, Optional, Sequence
 
 
 # **********************************************************
@@ -341,6 +341,19 @@ def _get_settings_by_document(document: workspace.Document | None):
 # *****************************************************
 # Internal execution APIs.
 # *****************************************************
+def get_cwd(settings: Dict[str, Any], document: Optional[workspace.Document]) -> str:
+    """Returns cwd for the given settings and document."""
+    if settings["cwd"] == "${workspaceFolder}":
+        return settings["workspaceFS"]
+
+    if settings["cwd"] == "${fileDirname}":
+        if document is not None:
+            return os.fspath(pathlib.Path(document.path).parent)
+        return settings["workspaceFS"]
+
+    return settings["cwd"]
+
+
 # pylint: disable=too-many-branches,too-many-statements
 def _run_tool_on_document(
     document: workspace.Document,
@@ -374,7 +387,7 @@ def _run_tool_on_document(
         return None
 
     code_workspace = settings["workspaceFS"]
-    cwd = settings["cwd"]
+    cwd = get_cwd(settings, document)
 
     use_path = False
     use_rpc = False
@@ -469,7 +482,7 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
     settings = copy.deepcopy(_get_settings_by_document(None))
 
     code_workspace = settings["workspaceFS"]
-    cwd = settings["workspaceFS"]
+    cwd = get_cwd(settings, None)
 
     use_path = False
     use_rpc = False

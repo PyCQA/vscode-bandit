@@ -19,16 +19,20 @@ There are several settings you can configure to customize the behavior of this e
 | `bandit.path`             | `[]`                 | Path or command used by the extension to run Bandit. Accepts an array of strings (each arg separate). <br> Examples: <br> - `"bandit.path": ["~/global_env/bandit"]` <br> - `"bandit.path": ["bandit"]` <br> - `"bandit.path": ["${interpreter}", "-m", "bandit"]` <br> If set to `["bandit"]`, it uses the Bandit available in your `PATH`. Note: Using a custom path may slow down linting. |
 | `bandit.interpreter`      | `[]`                 | Python executable or command used to launch Bandit. Accepts an array of strings (each arg separate). If left as `[]`, it uses the selected Python interpreter.                                                                                                                                                                                                                                |
 | `bandit.importStrategy`   | `useBundled`         | Specifies which Bandit binary to use. `useBundled` uses the version shipped with the extension. `fromEnvironment` uses the Bandit in the current Python environment. If it can't find one, it falls back to the bundled version. Overridden if `bandit.path` is set.                                                                                                                          |
-| `bandit.showNotification` | `off`                | Controls when extension notifications appear. Options: `onError`, `onWarning`, `always`, `off`.                                                                                                                                                                                                                                                                                               |
+| `bandit.showNotifications` | `off`                | Controls when extension notifications appear. Options: `onError`, `onWarning`, `always`, `off`.                                                                                                                                                                                                                                                                                               |
 
-The following variables are supported for substitution in the `bandit.args`, `bandit.cwd`, `bandit.path`, and `bandit.interpreter` settings:
+### Variable Substitution
 
--   `${workspaceFolder}`
--   `${workspaceFolder:FolderName}`
--   `${userHome}`
--   `${env:EnvVarName}`
+The following variables are supported for substitution in the `bandit.args`, `bandit.cwd`, and `bandit.path` settings:
 
-The `bandit.path` setting also supports the `${interpreter}` variable as one of the entries of the array. This variable is subtituted based on the value of the `bandit.interpreter` setting.
+| Variable                        | Description                                                                    | Supported In          |
+|---------------------------------|--------------------------------------------------------------------------------|-----------------------|
+| `${workspaceFolder}`            | Root directory of the currently active workspace folder                        | `args`, `cwd`, `path` |
+| `${workspaceFolder:FolderName}` | Root directory of a specific workspace folder in a multi-root workspace        | `args`, `path`        |
+| `${userHome}`                   | Path to the current user's home directory                                      | `args`, `path`        |
+| `${env:EnvVarName}`             | Value of the environment variable `EnvVarName`                                 | `args`, `path`        |
+| `${interpreter}`                | Python executable used by Bandit (workspace interpreter or bandit.interpreter) | `path`                |
+| `${fileDirname}`                | Directory of the file being linted                                             | `cwd`                 |
 
 ## Commands
 
