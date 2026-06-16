@@ -1,96 +1,14 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 """Unit tests for the get_cwd() helper in lsp_server."""
+
 import os
 import pathlib
-import sys
+import tempfile
 import types
 
-# ---------------------------------------------------------------------------
-# Stub out bundled LSP dependencies so lsp_server can be imported without the
-# full VS Code extension environment.
-# ---------------------------------------------------------------------------
-def _setup_mocks():
-    class _MockLS:
-        def __init__(self, **kwargs):
-            pass
-
-        def feature(self, *args, **kwargs):
-            return lambda f: f
-
-        def command(self, *args, **kwargs):
-            return lambda f: f
-
-        def window_log_message(self, *args, **kwargs):
-            pass
-
-        def window_show_message(self, *args, **kwargs):
-            pass
-
-    mock_server = types.ModuleType("pygls.server")
-    mock_server.LanguageServer = _MockLS
-
-    mock_lsp_server = types.ModuleType("pygls.lsp.server")
-    mock_lsp_server.LanguageServer = _MockLS
-
-    mock_lsp_mod = types.ModuleType("pygls.lsp")
-    mock_lsp_mod.server = mock_lsp_server
-
-    mock_workspace = types.ModuleType("pygls.workspace")
-    mock_workspace.TextDocument = type("TextDocument", (), {"path": None})
-
-    mock_uris = types.ModuleType("pygls.uris")
-    mock_uris.from_fs_path = lambda p: "file://" + p
-    mock_uris.to_fs_path = lambda u: u.replace("file://", "")
-
-    mock_lsp = types.ModuleType("lsprotocol.types")
-    for _name in [
-        "TEXT_DOCUMENT_DID_OPEN", "TEXT_DOCUMENT_DID_SAVE", "TEXT_DOCUMENT_DID_CLOSE",
-        "TEXT_DOCUMENT_FORMATTING", "INITIALIZE", "EXIT", "SHUTDOWN",
-        "NOTEBOOK_DOCUMENT_DID_OPEN", "NOTEBOOK_DOCUMENT_DID_CHANGE",
-        "NOTEBOOK_DOCUMENT_DID_SAVE", "NOTEBOOK_DOCUMENT_DID_CLOSE",
-    ]:
-        setattr(mock_lsp, _name, _name)
-    for _name in [
-        "Diagnostic", "DiagnosticSeverity", "DidCloseTextDocumentParams",
-        "DidOpenTextDocumentParams", "DidSaveTextDocumentParams",
-        "DocumentFormattingParams", "InitializeParams", "Position", "Range", "TextEdit",
-        "DidOpenNotebookDocumentParams", "DidChangeNotebookDocumentParams",
-        "DidSaveNotebookDocumentParams", "DidCloseNotebookDocumentParams",
-        "NotebookCellLanguage", "NotebookDocumentFilterWithNotebook",
-        "NotebookDocumentSyncOptions", "PublishDiagnosticsParams",
-    ]:
-        def _make_stub(name):
-            def __init__(self, *args, **kwargs):
-                pass
-            return type(name, (), {"__init__": __init__})
-        setattr(mock_lsp, _name, _make_stub(_name))
-    mock_lsp.MessageType = type("MessageType", (), {"Log": 4, "Error": 1, "Warning": 2, "Info": 3})
-    mock_lsp.NotebookCellKind = type("NotebookCellKind", (), {"Code": 2})
-
-    for _mod_name, _mod in [
-        ("pygls", types.ModuleType("pygls")),
-        ("pygls.server", mock_server),
-        ("pygls.lsp", mock_lsp_mod),
-        ("pygls.lsp.server", mock_lsp_server),
-        ("pygls.workspace", mock_workspace),
-        ("pygls.uris", mock_uris),
-        ("lsprotocol", types.ModuleType("lsprotocol")),
-        ("lsprotocol.types", mock_lsp),
-        ("lsp_jsonrpc", types.ModuleType("lsp_jsonrpc")),
-        ("lsp_utils", types.ModuleType("lsp_utils")),
-    ]:
-        if _mod_name not in sys.modules:
-            sys.modules[_mod_name] = _mod
-
-    tool_dir = str(pathlib.Path(__file__).parents[3] / "bundled" / "tool")
-    if tool_dir not in sys.path:
-        sys.path.insert(0, tool_dir)
-
-
-_setup_mocks()
-
-import lsp_server  # noqa: E402
+import lsp_server
+import pytest
 
 WORKSPACE = "/home/user/myproject"
 
@@ -103,8 +21,7 @@ def _make_settings(cwd=None):
 
 
 def _make_doc(path):
-    doc = types.SimpleNamespace(path=path)
-    return doc
+    return types.SimpleNamespace(path=path)
 
 
 # ---------------------------------------------------------------------------
@@ -154,51 +71,32 @@ DOC_PATH = "/home/user/myproject/src/foo.py"
 DOC = _make_doc(DOC_PATH)
 
 
-def test_file_resolved():
-    settings = _make_settings(cwd="${file}")
-    assert lsp_server.get_cwd(settings, DOC) == DOC_PATH
-
-
-def test_file_basename_resolved():
-    settings = _make_settings(cwd="${fileBasename}")
-    assert lsp_server.get_cwd(settings, DOC) == "foo.py"
-
-
-def test_file_basename_no_extension_resolved():
-    settings = _make_settings(cwd="${fileBasenameNoExtension}")
-    assert lsp_server.get_cwd(settings, DOC) == "foo"
-
-
-def test_file_extname_resolved():
-    settings = _make_settings(cwd="${fileExtname}")
-    assert lsp_server.get_cwd(settings, DOC) == ".py"
-
-
-def test_file_dirname_resolved():
-    settings = _make_settings(cwd="${fileDirname}")
-    assert lsp_server.get_cwd(settings, DOC) == "/home/user/myproject/src"
-
-
-def test_file_dirname_basename_resolved():
-    settings = _make_settings(cwd="${fileDirnameBasename}")
-    assert lsp_server.get_cwd(settings, DOC) == "src"
-
-
-def test_relative_file_resolved():
-    settings = _make_settings(cwd="${relativeFile}")
-    assert lsp_server.get_cwd(settings, DOC) == os.path.relpath(DOC_PATH, WORKSPACE)
-
-
-def test_relative_file_dirname_resolved():
-    settings = _make_settings(cwd="${relativeFileDirname}")
-    assert lsp_server.get_cwd(settings, DOC) == os.path.relpath(
-        "/home/user/myproject/src", WORKSPACE
-    )
-
-
-def test_file_workspace_folder_resolved():
-    settings = _make_settings(cwd="${fileWorkspaceFolder}")
-    assert lsp_server.get_cwd(settings, DOC) == WORKSPACE
+@pytest.mark.parametrize(
+    "token, expected",
+    [
+        pytest.param("${file}", DOC_PATH, id="file"),
+        pytest.param("${fileBasename}", "foo.py", id="fileBasename"),
+        pytest.param("${fileBasenameNoExtension}", "foo", id="fileBasenameNoExtension"),
+        pytest.param("${fileExtname}", ".py", id="fileExtname"),
+        pytest.param("${fileDirname}", "/home/user/myproject/src", id="fileDirname"),
+        pytest.param("${fileDirnameBasename}", "src", id="fileDirnameBasename"),
+        pytest.param(
+            "${relativeFile}",
+            os.path.relpath(DOC_PATH, WORKSPACE),
+            id="relativeFile",
+        ),
+        pytest.param(
+            "${relativeFileDirname}",
+            os.path.relpath("/home/user/myproject/src", WORKSPACE),
+            id="relativeFileDirname",
+        ),
+        pytest.param("${fileWorkspaceFolder}", WORKSPACE, id="fileWorkspaceFolder"),
+    ],
+)
+def test_single_variable_resolved(token, expected):
+    """Each VS Code variable token resolves to its expected value."""
+    settings = _make_settings(cwd=token)
+    assert lsp_server.get_cwd(settings, DOC) == expected
 
 
 def test_composite_pattern_resolved():
