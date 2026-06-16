@@ -3,11 +3,9 @@
 """Unit tests for the get_cwd() helper in lsp_server."""
 
 import os
-import pathlib
-import tempfile
 import types
 
-import lsp_server
+import lsp_server  # pylint: disable=import-error
 import pytest
 
 WORKSPACE = "/home/user/myproject"

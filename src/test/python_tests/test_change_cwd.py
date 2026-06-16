@@ -8,12 +8,12 @@ import pathlib
 import sys
 from unittest.mock import patch
 
+import lsp_utils  # pylint: disable=import-error
+
 # Ensure bundled libs and tool are importable.
 _PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, os.fsdecode(_PROJECT_ROOT / "bundled" / "libs"))
 sys.path.insert(0, os.fsdecode(_PROJECT_ROOT / "bundled" / "tool"))
-
-import lsp_utils
 
 
 def test_change_cwd_happy_path(tmp_path):
@@ -33,7 +33,8 @@ def test_change_cwd_happy_path(tmp_path):
 
 
 def test_change_cwd_permission_error_does_not_crash(caplog):
-    """When os.chdir raises PermissionError the body still runs, cwd is unchanged, and a warning is logged."""
+    """When os.chdir raises PermissionError the body still runs,
+    cwd is unchanged, and a warning is logged."""
     original_cwd = os.getcwd()
     body_executed = False
 

@@ -1,17 +1,15 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 """Implementation of tool support over LSP."""
+
 from __future__ import annotations
 
 import copy
 import json
 import os
 import pathlib
-import re
 import sys
-import sysconfig
 import traceback
-import urllib.parse
 from typing import Any, Optional, Sequence
 
 
@@ -124,6 +122,7 @@ def did_close(params: lsp.DidCloseTextDocumentParams) -> None:
         lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=[])
     )
 
+
 @LSP_SERVER.feature(lsp.NOTEBOOK_DOCUMENT_DID_OPEN)
 def notebook_did_open(params: lsp.DidOpenNotebookDocumentParams) -> None:
     """LSP handler for notebookDocument/didOpen request."""
@@ -155,9 +154,7 @@ def notebook_did_change(params: lsp.DidChangeNotebookDocumentParams) -> None:
     # Re-lint cells whose text content changed.
     if change.cells and change.cells.text_content:
         for text_change in change.cells.text_content:
-            document = LSP_SERVER.workspace.get_text_document(
-                text_change.document.uri
-            )
+            document = LSP_SERVER.workspace.get_text_document(text_change.document.uri)
             diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
             LSP_SERVER.text_document_publish_diagnostics(
                 lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
@@ -212,6 +209,7 @@ def notebook_did_close(params: lsp.DidCloseNotebookDocumentParams) -> None:
         LSP_SERVER.text_document_publish_diagnostics(
             lsp.PublishDiagnosticsParams(uri=cell_doc.uri, diagnostics=[])
         )
+
 
 def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
     result = _run_tool_on_document(document)
@@ -511,6 +509,7 @@ def _get_settings_by_document(document: workspace.TextDocument | None):
 # *****************************************************
 # Internal execution APIs.
 # *****************************************************
+# pylint: disable=too-many-branches,too-many-statements
 def _run_tool_on_document(
     document: workspace.TextDocument,
     use_stdin: bool = False,
@@ -693,11 +692,6 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
         # sys.path and that might not work for this scenario next time around.
         with utils.substitute_attr(sys, "path", sys.path[:]):
             try:
-                # TODO: `utils.run_module` is equivalent to running `python -m <pytool-module>`.
-                # If your tool supports a programmatic API then replace the function below
-                # with code for your tool. You can also use `utils.run_api` helper, which
-                # handles changing working directories, managing io streams, etc.
-                # Also update `_run_tool_on_document` function and `utils.run_module` in `lsp_runner.py`.
                 result = utils.run_module(
                     module=TOOL_MODULE, argv=argv, use_stdin=True, cwd=cwd
                 )
@@ -717,10 +711,12 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
 def log_to_output(
     message: str, msg_type: lsp.MessageType = lsp.MessageType.Log
 ) -> None:
+    """Log a message to output."""
     LSP_SERVER.window_log_message(lsp.LogMessageParams(type=msg_type, message=message))
 
 
 def log_error(message: str) -> None:
+    """Log an error."""
     LSP_SERVER.window_log_message(
         lsp.LogMessageParams(type=lsp.MessageType.Error, message=message)
     )
@@ -731,6 +727,7 @@ def log_error(message: str) -> None:
 
 
 def log_warning(message: str) -> None:
+    """Log an warning."""
     LSP_SERVER.window_log_message(
         lsp.LogMessageParams(type=lsp.MessageType.Warning, message=message)
     )
@@ -741,6 +738,7 @@ def log_warning(message: str) -> None:
 
 
 def log_always(message: str) -> None:
+    """Log a message always."""
     LSP_SERVER.window_log_message(
         lsp.LogMessageParams(type=lsp.MessageType.Info, message=message)
     )
