@@ -172,6 +172,7 @@
     },
     "devDependencies": {
         "@types/fs-extra": "^11.0.4",
+        "@types/mocha": "^10.0.10",
         "@types/node": "20.x",
         "@types/vscode": "1.78.0",
         "@vscode/test-electron": "^2.5.2",
@@ -180,6 +181,7 @@
         "@vscode/vsce": "^3.9.2",
         "eslint": "^10.5.0",
         "glob": "^13.0.6",
+        "mocha": "^11.7.6",
         "typescript": "^5.9.3",
         "prettier": "^3.8.4",
         "ts-loader": "^9.6.1",

@@ -8,12 +8,13 @@ import pathlib
 import sys
 from unittest.mock import patch
 
-import lsp_utils  # pylint: disable=import-error
-
 # Ensure bundled libs and tool are importable.
 _PROJECT_ROOT = pathlib.Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, os.fsdecode(_PROJECT_ROOT / "bundled" / "libs"))
 sys.path.insert(0, os.fsdecode(_PROJECT_ROOT / "bundled" / "tool"))
+
+# pylint: disable=wrong-import-position,import-error
+import lsp_utils
 
 
 def test_change_cwd_happy_path(tmp_path):
