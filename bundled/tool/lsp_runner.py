@@ -35,13 +35,13 @@ import lsp_utils as utils
 
 RPC = jsonrpc.create_json_rpc(sys.stdin.buffer, sys.stdout.buffer)
 
-exit_now = False
-while not exit_now:
+EXIT_NOW = False
+while not EXIT_NOW:
     msg = RPC.receive_data()
 
     method = msg["method"]
     if method == "exit":
-        exit_now = True
+        EXIT_NOW = True
         continue
 
     if method == "run":

@@ -50,7 +50,9 @@
     "activationEvents": [
         "onLanguage:python",
         "workspaceContains:.bandit",
-        "workspaceContains:*.py"
+        "workspaceContains:*.py",
+        "onNotebook:jupyter-notebook",
+        "onNotebook:interactive"
     ],
     "main": "./dist/extension.js",
     "scripts": {
@@ -60,9 +62,9 @@
         "package": "webpack --mode production --devtool source-map --config ./webpack.config.js",
         "compile-tests": "tsc -p . --outDir out",
         "watch-tests": "tsc -p . -w --outDir out",
-        "pretest": "npm run compile-tests && npm run compile",
+        "pretest": "npm run compile-tests && npm run compile && npm run lint",
         "lint": "eslint src --ext ts",
-        "format-check": "prettier --check 'src/**/*.ts' '.github/**/*.yml'",
+        "format-check": "prettier --check 'src/**/*.ts' 'build/**/*.yml' '.github/**/*.yml'",
         "test": "node ./out/test/ts_tests/runTest.js",
         "vsce-package": "vsce package -o bandit.vsix"
     },
@@ -163,27 +165,26 @@
         ]
     },
     "dependencies": {
-        "@vscode/python-extension": "^1.0.5",
-        "fs-extra": "^11.3.0",
-        "rimraf": "^6.0.1",
+        "@vscode/python-environments": "^1.0.0",
+        "@vscode/python-extension": "^1.0.6",
+        "fs-extra": "^11.3.5",
         "vscode-languageclient": "^8.1.0"
     },
     "devDependencies": {
         "@types/fs-extra": "^11.0.4",
-        "@types/mocha": "^10.0.6",
-        "@types/node": "16.x",
+        "@types/glob": "^8.1.0",
+        "@types/node": "20.x",
         "@types/vscode": "1.78.0",
-        "@typescript-eslint/eslint-plugin": "^6.17.0",
-        "@typescript-eslint/parser": "^6.17.0",
+        "@typescript-eslint/eslint-plugin": "^8.60.1",
+        "@typescript-eslint/parser": "^8.57.0",
         "@vscode/test-electron": "^2.5.2",
-        "@vscode/vsce": "^2.22.0",
-        "eslint": "^8.56.0",
-        "glob": "^10.3.10",
-        "mocha": "^10.4.0",
-        "prettier": "^3.5.3",
-        "ts-loader": "^9.5.2",
-        "typescript": "^5.3.3",
-        "webpack": "^5.98.0",
-        "webpack-cli": "^6.0.1"
+        "@vscode/vsce": "^3.7.1",
+        "eslint": "^10.3.0",
+        "glob": "^13.0.6",
+        "prettier": "^3.8.3",
+        "ts-loader": "^9.6.0",
+        "typescript": "^5.9.3",
+        "webpack": "^5.105.4",
+        "webpack-cli": "^7.0.3"
     }
 }

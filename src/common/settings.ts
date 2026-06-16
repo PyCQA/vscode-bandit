@@ -49,14 +49,14 @@ function resolveVariables(value: string[], workspace?: WorkspaceFolder, interpre
     });
 }
 
-function getCwd(config: WorkspaceConfiguration, workspace: WorkspaceFolder): string {
-    const cwd = config.get<string>('cwd', workspace.uri.fsPath);
-    return resolveVariables([cwd], workspace)[0];
-}
-
 export function getInterpreterFromSetting(namespace: string, scope?: ConfigurationScope) {
     const config = getConfiguration(namespace, scope);
     return config.get<string[]>('interpreter');
+}
+
+function getCwd(config: WorkspaceConfiguration, workspace: WorkspaceFolder): string {
+    const cwd = config.get<string>('cwd', '${workspaceFolder}');
+    return resolveVariables([cwd], workspace)[0];
 }
 
 export async function getWorkspaceSettings(
