@@ -61,7 +61,7 @@ NOTEBOOK_SYNC_OPTIONS = lsp.NotebookDocumentSyncOptions(
     ],
     save=True,
 )
-LSP_SERVER = server.LanguageServer(
+LSP_SERVER = LanguageServer(
     name="bandit-server",
     version="v0.1.0",
     max_workers=MAX_WORKERS,
@@ -301,10 +301,10 @@ def severity_to_str(severity: int) -> str:
 def code_action(params: lsp.CodeActionParams) -> list[lsp.CodeAction]:
     """LSP handler for textDocument/codeAction request."""
     uri = params.text_document.uri
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     settings = copy.deepcopy(_get_settings_by_document(document))
     code_actions = []
-    if not settings["enabled"]:
+    if not settings.get("enabled", True):
         return code_actions
 
     diagnostics = (d for d in params.context.diagnostics if d.source == TOOL_DISPLAY)
@@ -527,7 +527,7 @@ def _run_tool_on_document(
     # deep copy here to prevent accidentally updating global settings.
     settings = copy.deepcopy(_get_settings_by_document(document))
 
-    if not settings["enabled"]:
+    if not settings.get("enabled", True):
         log_warning(f"Skipping file [Linting Disabled]: {document.path}")
         log_warning("See `bandit.enabled` in settings.json to enabling linting.")
         return None
