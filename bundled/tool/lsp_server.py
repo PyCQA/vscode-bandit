@@ -10,7 +10,7 @@ import os
 import pathlib
 import sys
 import traceback
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Optional, Sequence
 
 
 # **********************************************************
@@ -37,16 +37,33 @@ update_sys_path(
 # pylint: disable=wrong-import-position,import-error
 import lsp_jsonrpc as jsonrpc
 import lsp_utils as utils
-import lsprotocol.types as lsp
-from pygls import server, uris, workspace
+from lsprotocol import types as lsp
+from pygls import uris, workspace
+from pygls.lsp.server import LanguageServer
 
 WORKSPACE_SETTINGS = {}
 GLOBAL_SETTINGS = {}
 RUNNER = pathlib.Path(__file__).parent / "lsp_runner.py"
 
 MAX_WORKERS = 5
-LSP_SERVER = server.LanguageServer(
-    name="bandit-server", version="v0.1.0", max_workers=MAX_WORKERS
+NOTEBOOK_SYNC_OPTIONS = lsp.NotebookDocumentSyncOptions(
+    notebook_selector=[
+        lsp.NotebookDocumentFilterWithNotebook(
+            notebook="jupyter-notebook",
+            cells=[lsp.NotebookCellLanguage(language="python")],
+        ),
+        lsp.NotebookDocumentFilterWithNotebook(
+            notebook="interactive",
+            cells=[lsp.NotebookCellLanguage(language="python")],
+        ),
+    ],
+    save=True,
+)
+LSP_SERVER = LanguageServer(
+    name="bandit-server",
+    version="v0.1.0",
+    max_workers=MAX_WORKERS,
+    notebook_document_sync=NOTEBOOK_SYNC_OPTIONS,
 )
 
 
@@ -81,7 +98,9 @@ def did_open(params: lsp.DidOpenTextDocumentParams) -> None:
     """LSP handler for textDocument/didOpen request."""
     document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
-    LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
+    LSP_SERVER.text_document_publish_diagnostics(
+        lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
+    )
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_SAVE)
@@ -89,7 +108,9 @@ def did_save(params: lsp.DidSaveTextDocumentParams) -> None:
     """LSP handler for textDocument/didSave request."""
     document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
-    LSP_SERVER.publish_diagnostics(document.uri, diagnostics)
+    LSP_SERVER.text_document_publish_diagnostics(
+        lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
+    )
 
 
 @LSP_SERVER.feature(lsp.TEXT_DOCUMENT_DID_CLOSE)
@@ -97,7 +118,97 @@ def did_close(params: lsp.DidCloseTextDocumentParams) -> None:
     """LSP handler for textDocument/didClose request."""
     document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     # Publishing empty diagnostics to clear the entries for this file.
-    LSP_SERVER.publish_diagnostics(document.uri, [])
+    LSP_SERVER.text_document_publish_diagnostics(
+        lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=[])
+    )
+
+
+@LSP_SERVER.feature(lsp.NOTEBOOK_DOCUMENT_DID_OPEN)
+def notebook_did_open(params: lsp.DidOpenNotebookDocumentParams) -> None:
+    """LSP handler for notebookDocument/didOpen request."""
+    nb = LSP_SERVER.workspace.get_notebook_document(
+        notebook_uri=params.notebook_document.uri
+    )
+    if nb is None:
+        return
+    for cell in nb.cells:
+        if cell.kind != lsp.NotebookCellKind.Code or cell.document is None:
+            continue
+        document = LSP_SERVER.workspace.get_text_document(cell.document)
+        diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
+        LSP_SERVER.text_document_publish_diagnostics(
+            lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
+        )
+
+
+@LSP_SERVER.feature(lsp.NOTEBOOK_DOCUMENT_DID_CHANGE)
+def notebook_did_change(params: lsp.DidChangeNotebookDocumentParams) -> None:
+    """LSP handler for notebookDocument/didChange request."""
+    nb = LSP_SERVER.workspace.get_notebook_document(
+        notebook_uri=params.notebook_document.uri
+    )
+    if nb is None:
+        return
+
+    change = params.change
+    # Re-lint cells whose text content changed.
+    if change.cells and change.cells.text_content:
+        for text_change in change.cells.text_content:
+            document = LSP_SERVER.workspace.get_text_document(text_change.document.uri)
+            diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
+            LSP_SERVER.text_document_publish_diagnostics(
+                lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
+            )
+
+    # Lint newly added cells (code cells only).
+    if change.cells and change.cells.structure and change.cells.structure.did_open:
+        code_cell_uris = {
+            cell.document
+            for cell in nb.cells
+            if cell.kind == lsp.NotebookCellKind.Code and cell.document is not None
+        }
+        for cell_doc in change.cells.structure.did_open:
+            if cell_doc.uri not in code_cell_uris:
+                continue
+            document = LSP_SERVER.workspace.get_text_document(cell_doc.uri)
+            diagnostics = _linting_helper(document)
+            LSP_SERVER.text_document_publish_diagnostics(
+                lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
+            )
+
+    # Clear diagnostics for removed cells.
+    if change.cells and change.cells.structure and change.cells.structure.did_close:
+        for cell_doc in change.cells.structure.did_close:
+            LSP_SERVER.text_document_publish_diagnostics(
+                lsp.PublishDiagnosticsParams(uri=cell_doc.uri, diagnostics=[])
+            )
+
+
+@LSP_SERVER.feature(lsp.NOTEBOOK_DOCUMENT_DID_SAVE)
+def notebook_did_save(params: lsp.DidSaveNotebookDocumentParams) -> None:
+    """LSP handler for notebookDocument/didSave request."""
+    nb = LSP_SERVER.workspace.get_notebook_document(
+        notebook_uri=params.notebook_document.uri
+    )
+    if nb is None:
+        return
+    for cell in nb.cells:
+        if cell.kind != lsp.NotebookCellKind.Code or cell.document is None:
+            continue
+        document = LSP_SERVER.workspace.get_text_document(cell.document)
+        diagnostics: list[lsp.Diagnostic] = _linting_helper(document)
+        LSP_SERVER.text_document_publish_diagnostics(
+            lsp.PublishDiagnosticsParams(uri=document.uri, diagnostics=diagnostics)
+        )
+
+
+@LSP_SERVER.feature(lsp.NOTEBOOK_DOCUMENT_DID_CLOSE)
+def notebook_did_close(params: lsp.DidCloseNotebookDocumentParams) -> None:
+    """LSP handler for notebookDocument/didClose request."""
+    for cell_doc in params.cell_text_documents:
+        LSP_SERVER.text_document_publish_diagnostics(
+            lsp.PublishDiagnosticsParams(uri=cell_doc.uri, diagnostics=[])
+        )
 
 
 def _linting_helper(document: workspace.Document) -> list[lsp.Diagnostic]:
@@ -188,10 +299,10 @@ def severity_to_str(severity: int) -> str:
 def code_action(params: lsp.CodeActionParams) -> list[lsp.CodeAction]:
     """LSP handler for textDocument/codeAction request."""
     uri = params.text_document.uri
-    document = LSP_SERVER.workspace.get_document(params.text_document.uri)
+    document = LSP_SERVER.workspace.get_text_document(params.text_document.uri)
     settings = copy.deepcopy(_get_settings_by_document(document))
     code_actions = []
-    if not settings["enabled"]:
+    if not settings.get("enabled", True):
         return code_actions
 
     diagnostics = (d for d in params.context.diagnostics if d.source == TOOL_DISPLAY)
@@ -263,9 +374,65 @@ def on_shutdown(_params: Optional[Any] = None) -> None:
     jsonrpc.shutdown_json_rpc()
 
 
+def get_cwd(settings: dict, document: Optional[workspace.TextDocument]) -> str:
+    """Returns the working directory for running the tool.
+
+    Resolves the following VS Code file-related variable substitutions when
+    a document is available:
+
+    - ``${file}`` – absolute path of the current document.
+    - ``${fileBasename}`` – file name with extension (e.g. ``foo.py``).
+    - ``${fileBasenameNoExtension}`` – file name without extension (e.g. ``foo``).
+    - ``${fileExtname}`` – file extension including the dot (e.g. ``.py``).
+    - ``${fileDirname}`` – directory containing the current document.
+    - ``${fileDirnameBasename}`` – name of the directory containing the document.
+    - ``${relativeFile}`` – document path relative to the workspace root.
+    - ``${relativeFileDirname}`` – document directory relative to the workspace root.
+    - ``${fileWorkspaceFolder}`` – workspace root folder for the document.
+
+    Variables that do not depend on the document (``${workspaceFolder}``,
+    ``${userHome}``, ``${cwd}``) are pre-resolved by the TypeScript client.
+
+    If no document is available and the value contains any unresolvable
+    file-variable, the workspace root is returned as a fallback.
+
+    See https://code.visualstudio.com/docs/reference/variables-reference
+    """
+    cwd = settings.get("cwd", settings["workspaceFS"])
+
+    workspace_fs = settings["workspaceFS"]
+
+    if document and document.path:
+        file_path = document.path
+        file_dir = os.path.dirname(file_path)
+        file_basename = os.path.basename(file_path)
+        file_stem, file_ext = os.path.splitext(file_basename)
+
+        substitutions = {
+            "${file}": file_path,
+            "${fileBasename}": file_basename,
+            "${fileBasenameNoExtension}": file_stem,
+            "${fileExtname}": file_ext,
+            "${fileDirname}": file_dir,
+            "${fileDirnameBasename}": os.path.basename(file_dir),
+            "${relativeFile}": os.path.relpath(file_path, workspace_fs),
+            "${relativeFileDirname}": os.path.relpath(file_dir, workspace_fs),
+            "${fileWorkspaceFolder}": workspace_fs,
+        }
+
+        for token, value in substitutions.items():
+            cwd = cwd.replace(token, value)
+    else:
+        # Without a document we cannot resolve file-related variables.
+        # Fall back to workspace root if any remain.
+        if "${file" in cwd or "${relativeFile" in cwd:
+            cwd = workspace_fs
+
+    return cwd
+
+
 def _get_global_defaults():
     return {
-        "enabled": GLOBAL_SETTINGS.get("enabled", True),
         "path": GLOBAL_SETTINGS.get("path", []),
         "interpreter": GLOBAL_SETTINGS.get("interpreter", [sys.executable]),
         "args": GLOBAL_SETTINGS.get("args", []),
@@ -307,7 +474,7 @@ def _get_settings_by_path(file_path: pathlib.Path):
     return setting_values[0]
 
 
-def _get_document_key(document: workspace.Document):
+def _get_document_key(document: workspace.TextDocument):
     if WORKSPACE_SETTINGS:
         document_workspace = pathlib.Path(document.path)
         workspaces = {s["workspaceFS"] for s in WORKSPACE_SETTINGS.values()}
@@ -321,7 +488,7 @@ def _get_document_key(document: workspace.Document):
     return None
 
 
-def _get_settings_by_document(document: workspace.Document | None):
+def _get_settings_by_document(document: workspace.TextDocument | None):
     if document is None or document.path is None:
         return list(WORKSPACE_SETTINGS.values())[0]
 
@@ -342,22 +509,9 @@ def _get_settings_by_document(document: workspace.Document | None):
 # *****************************************************
 # Internal execution APIs.
 # *****************************************************
-def get_cwd(settings: Dict[str, Any], document: Optional[workspace.Document]) -> str:
-    """Returns cwd for the given settings and document."""
-    if settings["cwd"] == "${workspaceFolder}":
-        return settings["workspaceFS"]
-
-    if settings["cwd"] == "${fileDirname}":
-        if document is not None:
-            return os.fspath(pathlib.Path(document.path).parent)
-        return settings["workspaceFS"]
-
-    return settings["cwd"]
-
-
 # pylint: disable=too-many-branches,too-many-statements
 def _run_tool_on_document(
-    document: workspace.Document,
+    document: workspace.TextDocument,
     use_stdin: bool = False,
     extra_args: Optional[Sequence[str]] = None,
 ) -> utils.RunResult | None:
@@ -372,7 +526,7 @@ def _run_tool_on_document(
     # deep copy here to prevent accidentally updating global settings.
     settings = copy.deepcopy(_get_settings_by_document(document))
 
-    if not settings["enabled"]:
+    if not settings.get("enabled", True):
         log_warning(f"Skipping file [Linting Disabled]: {document.path}")
         log_warning("See `bandit.enabled` in settings.json to enabling linting.")
         return None
@@ -538,12 +692,6 @@ def _run_tool(extra_args: Sequence[str]) -> utils.RunResult:
         # sys.path and that might not work for this scenario next time around.
         with utils.substitute_attr(sys, "path", sys.path[:]):
             try:
-                # TODO: `utils.run_module` is equivalent to running `python -m <pytool-module>`.
-                # If your tool supports a programmatic API then replace the function below
-                # with code for your tool. You can also use `utils.run_api` helper, which
-                # handles changing working directories, managing io streams, etc.
-                # Also update `_run_tool_on_document` function and `utils.run_module` in
-                # `lsp_runner.py`.
                 result = utils.run_module(
                     module=TOOL_MODULE, argv=argv, use_stdin=True, cwd=cwd
                 )
@@ -564,28 +712,40 @@ def log_to_output(
     message: str, msg_type: lsp.MessageType = lsp.MessageType.Log
 ) -> None:
     """Log a message to output."""
-    LSP_SERVER.show_message_log(message, msg_type)
+    LSP_SERVER.window_log_message(lsp.LogMessageParams(type=msg_type, message=message))
 
 
 def log_error(message: str) -> None:
     """Log an error."""
-    LSP_SERVER.show_message_log(message, lsp.MessageType.Error)
+    LSP_SERVER.window_log_message(
+        lsp.LogMessageParams(type=lsp.MessageType.Error, message=message)
+    )
     if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["onError", "onWarning", "always"]:
-        LSP_SERVER.show_message(message, lsp.MessageType.Error)
+        LSP_SERVER.window_show_message(
+            lsp.ShowMessageParams(type=lsp.MessageType.Error, message=message)
+        )
 
 
 def log_warning(message: str) -> None:
     """Log an warning."""
-    LSP_SERVER.show_message_log(message, lsp.MessageType.Warning)
+    LSP_SERVER.window_log_message(
+        lsp.LogMessageParams(type=lsp.MessageType.Warning, message=message)
+    )
     if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["onWarning", "always"]:
-        LSP_SERVER.show_message(message, lsp.MessageType.Warning)
+        LSP_SERVER.window_show_message(
+            lsp.ShowMessageParams(type=lsp.MessageType.Warning, message=message)
+        )
 
 
 def log_always(message: str) -> None:
     """Log a message always."""
-    LSP_SERVER.show_message_log(message, lsp.MessageType.Info)
+    LSP_SERVER.window_log_message(
+        lsp.LogMessageParams(type=lsp.MessageType.Info, message=message)
+    )
     if os.getenv("LS_SHOW_NOTIFICATION", "off") in ["always"]:
-        LSP_SERVER.show_message(message, lsp.MessageType.Info)
+        LSP_SERVER.window_show_message(
+            lsp.ShowMessageParams(type=lsp.MessageType.Info, message=message)
+        )
 
 
 # *****************************************************
