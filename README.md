@@ -49,3 +49,13 @@ To open the logs, click on the language status icon (`{}`) on the bottom right o
 ## Troubleshooting
 
 In this section, you will find some common issues you might encounter and how to resolve them. If you are experiencing any issues that are not covered here, please [file an issue](https://github.com/PyCQA/vscode-bandit/issues).
+
+### No diagnostics when using Bandit from your environment
+
+The extension reads Bandit's SARIF output. If you use `bandit.importStrategy: fromEnvironment` or a custom `bandit.path`, install Bandit with SARIF support in that environment:
+
+```shell
+python -m pip install "bandit[sarif]"
+```
+
+Then run **Bandit: Restart Server** from the Command Palette. Installing `bandit` and `bandit_sarif_formatter` separately can produce valid SARIF without publishing diagnostics in the extension; installing the `sarif` extra fixed the confirmed case in [#103](https://github.com/PyCQA/vscode-bandit/issues/103).
