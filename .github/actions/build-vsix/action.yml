@@ -61,6 +61,37 @@ runs:
       run: npm run vsce-package
       shell: bash
 
+    - name: Verify bundled Bandit runtime in VSIX
+      run: |
+        python - <<'PY'
+        import pathlib
+        import zipfile
+
+        archive_path = pathlib.Path("bandit.vsix")
+        with zipfile.ZipFile(archive_path) as archive:
+            names = set(archive.namelist())
+
+        required = {
+            "extension/bundled/libs/bandit/__init__.py",
+            "extension/bundled/libs/bandit/formatters/sarif.py",
+            "extension/bundled/libs/sarif_om/__init__.py",
+        }
+        missing = sorted(required - names)
+        has_bandit_metadata = any(
+            name.startswith("extension/bundled/libs/bandit-")
+            and name.endswith(".dist-info/METADATA")
+            for name in names
+        )
+        if not has_bandit_metadata:
+            missing.append("extension/bundled/libs/bandit-*.dist-info/METADATA")
+        if missing:
+            raise SystemExit(
+                "VSIX is missing required Bandit runtime files: " + ", ".join(missing)
+            )
+        print("Verified bundled Bandit metadata and SARIF support in bandit.vsix")
+        PY
+      shell: bash
+
     - name: Upload VSIX
       uses: actions/upload-artifact@v4
       with:
